@@ -1,0 +1,7 @@
+﻿/.vs
+/.mono/
+**/obj
+**/bin
+**/*.user
+/.publish-passwords
+**/publish/

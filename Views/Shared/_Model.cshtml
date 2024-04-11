@@ -1,0 +1,38 @@
+﻿@using System.ComponentModel;
+@using DotNetWebRenderingBug.Utils;
+@model Object
+
+
+<table>
+@foreach (var property in Model.GetType().GetProperties()) {
+    object? value = property.GetValue(Model);
+    if (value == null) continue;
+    bool complexProperty = !property.PropertyType.IsPrimitive && property.PropertyType != typeof(string);
+    <tr data-field-name="@property.Name">
+        <th>@Html.DisplayName(property.Name)</th>
+        <td width="100%">
+            @if (complexProperty) {
+                var viewData = new ViewDataDictionary(Html.ViewData);
+                viewData["HtmlFieldPrefix"] = Html.ViewData["HtmlFieldPrefix"] == null ? property.Name : $"{Html.ViewData["HtmlFieldPrefix"]}.{property.Name}";
+                <partial name="_Model" model=@value view-data=@viewData />
+            } else {
+                string htmlFieldName = Html.ViewData["HtmlFieldPrefix"] == null ? property.Name : $"{Html.ViewData["HtmlFieldPrefix"]}.{property.Name}";
+                // If the field name is explicitly set, the bug is not reproduced for child objects as the correct value will be fetched from the ModelState.
+                // However, even if the field name is explicitly set, the bug is reproduced for other objects.
+                //@Html.Editor(property.Name, null, htmlFieldName);
+
+                // In the case where the field name is not explicitly set in the Editor method, the bug is reproduced for child objects with field name clashes.
+                // I am setting the field name outside of the Editor. I need it set properly so the form can be submitted correctly.
+                @Html.Editor(property.Name).SetFieldName(htmlFieldName);
+
+                // To debug this, put a breakpoint in DefaultHtmlGenerator.GenerateInput and look at default in the switch case.
+                // We explicitly take the value from the ModelState regardless if the correct value has been provided to the method.
+
+                // The only workaround to always get the correct value is to override the value of the IHtmlEditor like below:
+                //@Html.Editor(property.Name, null, htmlFieldName).OverrideValue(value as string ?? "");
+                //@Html.Editor(property.Name).SetFieldName(htmlFieldName).OverrideValue(value as string ?? "");
+            }
+        </td>
+    </tr>
+}
+</table>

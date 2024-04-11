@@ -1,0 +1,17 @@
+﻿@using System.ComponentModel;
+@model Object
+
+<form action="/Buggy" method="post">
+    The same data is rendered with the same view regardless if you use the GET or POST endpoint.<br/>
+    However, only the GET endpoint renders the data correctly.<br/>
+    Render with <button type="submit" formmethod="get">Get</button> / Render with <button type="submit">Post</button><br /><br />
+
+    <h2>View Object</h2>
+    When using POST, the child object field values are overridden if the field names clash with the parent object field names unless the field name is explicitly set in the Editor method.
+
+    <partial name="_Model" model="@Model" />
+</form>
+<br/>
+<h2>View Another Object</h2>
+When using POST, all field values are overridden by the values of the posted object when the names clash.
+<partial name="_Model" model="@DataModel.SampleData2" />
