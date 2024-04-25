@@ -1,9 +1,12 @@
 ﻿using DotNetWebRenderingBug.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace DotNetWebRenderingBug.Controllers;
 
 [Route("/Buggy")]
+[ValidateParametersAndClearModelStateActionFilter] // Adding this line fixes the issue.
 public class BuggyController : Controller {
 
     [HttpGet]
@@ -18,6 +21,17 @@ public class BuggyController : Controller {
     /// </remark>
     [HttpPost]
     public IActionResult EditValuePost([FromForm] DataModel data) {
+        // ModelState.Clear(); // Adding this line fixes the issue.
         return View("_View", data);
+    }
+}
+
+public class ValidateParametersAndClearModelStateActionFilterAttribute : ActionFilterAttribute {
+    public override void OnActionExecuting(ActionExecutingContext filterContext) {
+        var controller = filterContext.Controller as ControllerBase;
+        if (controller == null) return;
+        var firstError = controller.ModelState.Values.FirstOrDefault(v => v.ValidationState == ModelValidationState.Invalid);
+        if (firstError != null) throw new Exception(firstError.Errors.First().ErrorMessage);
+        controller.ModelState.Clear();
     }
 }
